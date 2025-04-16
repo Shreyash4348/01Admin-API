@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insurance Plan Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="bg-light">
+    <div class="container mt-4">
+        <h2 class="text-center text-primary">Insurance Plan Management</h2>
+        
+        <!-- Plan Form -->
+        <div class="card p-4 shadow-sm">
+            <h4 class="text-center">Add New Plan</h4>
+            <form id="planForm">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">Plan Name</label>
+                        <input type="text" class="form-control" id="planName" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Category</label>
+                        <select id="planCategory" class="form-control" required>
+                            <option value="">Loading...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="planStartDate" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="planEndDate" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success mt-3">Save Plan</button>
+            </form>
+        </div>
+
+        <!-- Plan Table -->
+        <div class="card p-4 mt-4 shadow-sm">
+            <h4 class="text-center">Available Plans</h4>
+            <table class="table table-bordered mt-3">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="plansTable">
+                    <tr>
+                        <td colspan="6" class="text-center">Loading Plans...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        $(document).ready(function () {
+            loadCategories();
+            loadPlans();
+
+            $("#planForm").submit(function (event) {
+                event.preventDefault();
+                savePlan();
+            });
+        });
+
+        function loadCategories() {
+            $.get("http://localhost:8080/categories", function (data) {
+                let categoryOptions = "<option value=''>Select Category</option>";
+                $.each(data, function (key, value) {
+                    categoryOptions += `<option value='${key}'>${value}</option>`;
+                });
+                $("#planCategory").html(categoryOptions);
+            }).fail(function () {
+                alert("Failed to load categories. Check API.");
+            });
+        }
+
+        function loadPlans() {
+            $.get("http://localhost:8080/plans", function (data) {
+                let rows = "";
+                $.each(data, function (index, plan) {
+                    rows += `
+                        <tr>
+                            <td>${plan.planId}</td>
+                            <td>${plan.planName}</td>
+                            <td>${plan.planCategoryId}</td>
+                            <td>${plan.planStartDate}</td>
+                            <td>${plan.planEndDate}</td>
+                            <td>${plan.activeSw}</td>
+                        </tr>
+                    `;
+                });
+                $("#plansTable").html(rows);
+            }).fail(function () {
+                $("#plansTable").html("<tr><td colspan='6' class='text-center'>Failed to load plans</td></tr>");
+            });
+        }
+
+        function savePlan() {
+            let newPlan = {
+                planName: $("#planName").val(),
+                planCategoryId: $("#planCategory").val(),
+                planStartDate: $("#planStartDate").val(),
+                planEndDate: $("#planEndDate").val(),
+                activeSw: "Active"
+            };
+
+            $.ajax({
+                url: "http://localhost:8080/plan",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(newPlan),
+                success: function (response) {
+                    alert(response);
+                    loadPlans();
+                },
+                error: function () {
+                    alert("Failed to save plan");
+                }
+            });
+        }
+    </script>
+</body>
+</html>
